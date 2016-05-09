@@ -167,11 +167,13 @@ public class RollingLogReaderImpl extends Thread implements LogListener {
 					System.out.print(log);
 				}
 
-				file.write(log.getBytes(StandardCharsets.UTF_8));
-
-				if (file.length() > limit) {
+				if ((file.length() + log.length()) > limit) {
 					file.close();
 					file = rollover();
+					// Enqueue the last dequeued LogEntry to prevent loss
+					queue.offer(entry);
+				} else {
+					file.write(log.getBytes(StandardCharsets.UTF_8));
 				}
 			}
 		} catch (InterruptedException e) {
